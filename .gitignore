@@ -1,7 +1,7 @@
 build.properties
 .DS_Store
 build
-.idea/**/*
+.idea
 *.iml
 *.iws
 *.ipr
