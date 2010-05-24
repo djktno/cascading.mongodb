@@ -1,4 +1,4 @@
-package com.gameattain.dpa;
+package cascading.mongodb;
 
 import cascading.scheme.Scheme;
 import cascading.tap.Tap;
@@ -31,8 +31,8 @@ public class MongoDBScheme extends Scheme {
     }
 
     public void sinkInit(Tap tap, JobConf jobConf) throws IOException {
-        jobConf.setOutputFormat(MongoDBOutputFormat.class);
-        jobConf.setOutputKeyClass();
+//        jobConf.setOutputFormat(MongoDBOutputFormat.class);
+//        jobConf.setOutputKeyClass();
         jobConf.setOutputValueClass(BasicDBObject.class);
     }
 

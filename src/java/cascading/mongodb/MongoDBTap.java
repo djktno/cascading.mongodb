@@ -1,4 +1,4 @@
-package com.gameattain.dpa;
+package cascading.mongodb;
 
 import cascading.tap.SinkMode;
 import cascading.tap.Tap;
@@ -80,6 +80,8 @@ public class MongoDBTap extends Tap
         {
             m = new Mongo(hostname, port);
         }
+
+        return m;
     }
 
     private DB getDB()
@@ -90,6 +92,7 @@ public class MongoDBTap extends Tap
             db = m.getDB(database);
         }
 
+        return db;
     }
 
     @Override

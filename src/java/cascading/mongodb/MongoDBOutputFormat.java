@@ -1,4 +1,4 @@
-package com.gameattain.dpa;
+package cascading.mongodb;
 
 import org.apache.hadoop.mapreduce.*;
 
@@ -10,6 +10,7 @@ import java.io.IOException;
  */
 public class MongoDBOutputFormat extends OutputFormat
 {
+    public static final String OUTPUT_COLLECTION = "";
 
     public RecordWriter getRecordWriter(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
