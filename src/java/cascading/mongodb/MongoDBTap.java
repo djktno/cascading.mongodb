@@ -23,11 +23,11 @@ import java.net.UnknownHostException;
  * Date: May 21, 2010
  * Time: 8:23:51 PM
  */
-public class MongoDBTap extends Tap
-{
-    private static final Logger log = Logger.getLogger(MongoDBTap.class.getName());
+public class MongoDBTap extends Tap {
 
-    private static final String SCHEME = "mongodb";
+    static final Logger log = Logger.getLogger(MongoDBTap.class.getName());
+
+    private static final String SCHEME = "mongodb:/";
 
     private transient Mongo m;
     private transient DB db;
@@ -36,68 +36,93 @@ public class MongoDBTap extends Tap
     private String database;
     private String hostname;
     private int port = 27017;
+    private String username;
+    private String password;
+    private String connectionUrl;
 
-    public MongoDBTap(String database, String collection, MongoDBScheme scheme)
+    private CollectionDescriptor collectionDescriptor;
+
+    public MongoDBTap(String hostname, String database, String collection, MongoDBScheme scheme, CollectionDescriptor descriptor)
     {
-        super(scheme, SinkMode.APPEND);
+        this(database, collection, scheme);
+        this.hostname = hostname;
+        this.collectionDescriptor = descriptor;
+        this.connectionUrl = hostname + "/" + database + "/" + collection;
+    }
+
+    public MongoDBTap(String database, String collection, MongoDBScheme scheme) {
+        super(scheme, SinkMode.KEEP);
         this.collection = collection;
         this.database = database;
     }
 
-    public MongoDBTap(Mongo mongo, String database, String collection, MongoDBScheme scheme)
-    {
-        this(database, collection, scheme);
-        this.m = mongo;
-    }
+//    public MongoDBTap(Mongo mongo, String database, String collection, MongoDBScheme scheme) {
+//        this(database, collection, scheme);
+//        this.m = mongo;
+//    }
+//
+//    public MongoDBTap(String hostname, String database, String collection, MongoDBScheme scheme) {
+//        this(database, collection, scheme);
+//        this.hostname = hostname;
+//    }
+//
+//    public MongoDBTap(String hostname, int port, String database, String collection, MongoDBScheme scheme) {
+//        this(hostname, database, collection, scheme);
+//        this.port = port;
+//    }
 
-    public MongoDBTap(String hostname, String database, String collection, MongoDBScheme scheme)
-    {
-        this(database, collection, scheme);
-        this.hostname = hostname;
-    }
-
-    public MongoDBTap(String hostname, int port, String database, String collection, MongoDBScheme scheme)
-    {
-        this(hostname, database, collection, scheme);
-        this.port = port;
-    }
-
-    private URI getURI()
-    {
-        try
-        {
+    private URI getURI() {
+        try {
             return new URI(SCHEME, collection, null);
         }
-        catch (URISyntaxException e)
-        {
+        catch (URISyntaxException e) {
             throw new TapException("unable to create Uri", e);
         }
     }
 
-    private Mongo getMongo() throws UnknownHostException
-    {
-        if (m == null)
-        {
+    private Mongo getMongo() throws UnknownHostException {
+        if (m == null) {
             m = new Mongo(hostname, port);
         }
 
         return m;
     }
 
-    private DB getDB()
-    {
-        assert m != null;
-        if (db == null)
+    private DB getDB() {
+
+        if (m == null)
         {
+            try
+            {
+                m = new Mongo(hostname, port);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+
+        if (db == null) {
             db = m.getDB(database);
         }
 
         return db;
     }
 
+    public boolean isSink()
+    {
+        return collectionDescriptor != null;
+    }
+
+    public boolean isWriteDirect()
+    {
+        return true;
+    }
+
     @Override
     public Path getPath() {
-        return new Path( getURI().toString());
+        return new Path(SCHEME + connectionUrl.replaceAll( ":", "_" ));
     }
 
     @Override
@@ -107,6 +132,10 @@ public class MongoDBTap extends Tap
 
     @Override
     public TupleEntryCollector openForWrite(JobConf jobConf) throws IOException {
+
+        if (!isSink())
+            throw new TapException("This tap cannot be used as a sink.");
+
         return new TapCollector(this, jobConf);
     }
 
@@ -118,13 +147,13 @@ public class MongoDBTap extends Tap
 
         log.debug("Creating collection: {name = " + collection + "};");
         DBCollection coll = getDB().getCollection(collection);
-        
+
 
         if (coll != null)
             return true;
 
         return false;
-        
+
     }
 
     @Override
@@ -142,6 +171,10 @@ public class MongoDBTap extends Tap
 
     @Override
     public boolean pathExists(JobConf jobConf) throws IOException {
+
+        if (!isSink())
+            return true;
+
         return getDB().collectionExists(collection);
     }
 
@@ -151,19 +184,30 @@ public class MongoDBTap extends Tap
     }
 
     @Override
-    public void sinkInit(JobConf jobConf) throws IOException
-    {
+    public void sinkInit(JobConf jobConf) throws IOException {
+
+        if (!isSink())
+            return;
+
         log.debug("Sinking to collection: {name=" + collection + "};");
 
-        if (isReplace() && jobConf.get("mapred.task.partition") == null)
-        {
+        if (isReplace() && jobConf.get("mapred.task.partition") == null) {
             deletePath(jobConf);
         }
 
         makeDirs(jobConf);
-
-        jobConf.set(MongoDBOutputFormat.OUTPUT_COLLECTION, collection);
         super.sinkInit(jobConf);
 
+    }
+
+    @Override
+    public String toString()
+    {
+        return "MongoDBTap {host=" + hostname + ", port=" + port + ", collection=" + collection + "}";
+    }
+
+
+    public String getCollection() {
+        return collection;
     }
 }
