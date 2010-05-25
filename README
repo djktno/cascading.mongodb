@@ -1,0 +1,38 @@
+This is the Cascading.MongoDB module.
+
+ It provides support for writing data to MongoDB via
+ when bound to a Cascading data processing flow.
+
+ Cascading is a feature rich API for defining and executing complex,
+ scale-free, and fault tolerant data processing workflows on a Hadoop
+ cluster. It can be found at the following location:
+
+   http://www.cascading.org/
+
+Building
+
+ This release requires at least Cascading 1.1.1. Hadoop 0.19.x,
+ and the related mongo-java-driver release. 
+
+ To build a jar,
+
+ > ant -Dcascading.home=... -Dhadoop.home=... -Dmongo.driver.home=... jar
+
+ To test,
+
+ > ant -Dcascading.home=... -Dhadoop.home=... -Dmongo.driver.home=... test
+
+where "..." is the install path of each of the dependencies.
+
+
+Using
+
+  The cascading-mongodb.jar file should be added to the "lib"
+  directory of your Hadoop application jar file along with all
+  Cascading dependencies.
+
+  You must also include the mongo-java-driver library compatible with your database.
+
+License
+
+  Copyright (c) 2010, djktno with heavy attribution to the cascading.jdbc module (used as a model) which is (c) 2009 Concurrent, Inc. 
