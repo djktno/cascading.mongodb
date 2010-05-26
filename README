@@ -32,7 +32,3 @@ Using
   Cascading dependencies.
 
   You must also include the mongo-java-driver library compatible with your database.
-
-License
-
-  Copyright (c) 2010, djktno with heavy attribution to the cascading.jdbc module (used as a model) which is (c) 2009 Concurrent, Inc. 
