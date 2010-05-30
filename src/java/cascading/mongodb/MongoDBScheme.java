@@ -21,13 +21,14 @@ import java.io.IOException;
 public class MongoDBScheme extends Scheme {
     private static final Logger log = Logger.getLogger(MongoDBScheme.class.getName());
 
-    private Fields fields;
+    private Fields fields[];
     private Class<? extends OutputFormat> outputFormatClass;
+    private String collection;
 
-    public MongoDBScheme(Class<? extends OutputFormat> outputFormatClass, Fields fields) {
+    public MongoDBScheme(Class<? extends OutputFormat> outputFormatClass, Fields attributeFields) {
         this.outputFormatClass = outputFormatClass;
-        this.fields = fields;
-    }
+        this.fields = Fields.fields(attributeFields);
+    }    
 
     public void sourceInit(Tap tap, JobConf jobConf) throws IOException {
         //To change body of implemented methods use File | Settings | File Templates.
@@ -35,8 +36,8 @@ public class MongoDBScheme extends Scheme {
 
     public void sinkInit(Tap tap, JobConf jobConf) throws IOException {
 
-        String collectionName = ((MongoDBTap) tap).getCollection();
-        MongoDBOutputFormat.setOutput( jobConf, MongoDBOutputFormat.class, collectionName);
+        collection = ((MongoDBTap) tap).getCollection();
+        //MongoDBOutputFormat.setOutput( jobConf, MongoDBOutputFormat.class, collectionName);
 
         if (outputFormatClass != null)
             jobConf.setOutputFormat(outputFormatClass);
@@ -47,35 +48,29 @@ public class MongoDBScheme extends Scheme {
         return ((MongoDBDocumentRecord) value).getTuple();
     }
 
+    // {@inheritDoc}
     public void sink(TupleEntry tupleEntry, OutputCollector outputCollector) throws IOException {
 
-//        BasicDBObject document = new BasicDBObject();
-//
-//        for (int i = 0; i < fields.length; i++) {
-//            Fields field = fields[i];
-//            TupleEntry values = tupleEntry.selectEntry(field);
-//
-//            for (int j = 0; j < values.getFields().size(); j++) {
-//                Fields fields = values.getFields();
-//                Tuple tuple = values.getTuple();
-//
-//                document.put(fields.get(j).toString(), tuple.getString(j));
-//            }
-//        }
-//
-//        outputCollector.collect(null, document);
+        BasicDBObject document = new BasicDBObject();
 
-        Tuple result = tupleEntry.selectTuple(getSinkFields());
-        result = cleanTuple(result);
-        outputCollector.collect(new MongoDBDocumentRecord(result), null);
+        for (int i = 0; i < fields.length; i++) {
+            Fields field = fields[i];
+            TupleEntry values = tupleEntry.selectEntry(field);
 
-    }
+            for (int j = 0; j < values.getFields().size(); j++) {
+                Fields fields = values.getFields();
+                Tuple tuple = values.getTuple();
 
-    private void setSourceSink(Fields keyFields, Fields[] columnFields) {
-        Fields allFields = Fields.join(keyFields, Fields.join(columnFields)); // prepend
+                document.put(fields.get(j).toString(), tuple.getString(j));
+            }
+        }
 
-        setSourceFields(allFields);
-        setSinkFields(allFields);
+        outputCollector.collect(null, document);
+
+//        Tuple result = tupleEntry.selectTuple(getSinkFields());
+//        result = cleanTuple(result);
+//        outputCollector.collect(new MongoDBDocumentRecord(tupleEntry), null);
+
     }
 
     /**

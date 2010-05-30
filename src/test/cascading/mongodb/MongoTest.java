@@ -1,4 +1,4 @@
-package com.gameattain.dpa;
+package cascading.mongodb;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -41,10 +41,14 @@ public class MongoTest
         Assert.assertNotNull(db);
 
         Set<String> collection = db.getCollectionNames();
-        for (String s : collection)
+        CollectionWrapper cw = new CollectionWrapper(collection);
+        cw.forEach(new Closure()
         {
-            System.out.println(s);
-        }
+           public void exec(Object o)
+           {
+                System.out.println((String) o);   
+           }
+        });
     }
 
     @Test

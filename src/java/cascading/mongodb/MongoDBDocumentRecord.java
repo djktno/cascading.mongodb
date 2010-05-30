@@ -1,6 +1,7 @@
 package cascading.mongodb;
 
 import cascading.tuple.Tuple;
+import cascading.tuple.TupleEntry;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoException;
 
@@ -13,29 +14,36 @@ import java.util.Set;
  */
 public class MongoDBDocumentRecord implements MongoWritable
 {
-    private Tuple tuple;
+    private TupleEntry tupleEntry;
 
     public MongoDBDocumentRecord()
     {}
 
-    public MongoDBDocumentRecord(Tuple tuple)
+    public MongoDBDocumentRecord(TupleEntry tupleEntry)
     {
-        this.tuple = tuple;
+        this.tupleEntry = tupleEntry;
     }
 
-    public void setTuple(Tuple tuple)
+    public void setTupleEntry(TupleEntry tupleEntry)
     {
-        this.tuple = tuple;
+        this.tupleEntry = tupleEntry;
+    }
+
+    public TupleEntry getTupleEntry()
+    {
+        return tupleEntry;
     }
 
     public Tuple getTuple()
     {
-        return tuple;
+        return tupleEntry.getTuple();
     }
 
     
 
     public void write(BasicDBObject document) throws MongoException {
+
+        Tuple tuple = tupleEntry.getTuple();
 
         for (int i = 0; i < tuple.size(); i++)
         {
@@ -46,7 +54,7 @@ public class MongoDBDocumentRecord implements MongoWritable
 
     public void readFields(BasicDBObject document) throws MongoException {
 
-        tuple = new Tuple();
+        Tuple tuple = new Tuple();
 
         Set<Map.Entry<String, Object>> entries = document.entrySet();
         for(Map.Entry entry : entries)
