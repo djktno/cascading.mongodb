@@ -13,6 +13,7 @@ import cascading.tap.Lfs;
 import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.TupleEntryIterator;
+import com.gameattain.FeedRecordWriter;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
@@ -28,15 +29,23 @@ import java.util.Properties;
 public class MongoDBTest extends ClusterTestCase {
 
     String inputFile = "src/test/data/testdata.txt";
-    private static final String HOST = "localhost";
-    private static final int PORT = 27017;
+    private static final String HOST = "arrow.mongohq.com";
+    private static final int PORT = 27025;
     private static final String COLLECTION = "cascadingtest";
     private static final String DB = "gameattain";
 
-    //private static final String USERNAME = "gameattain";
+    private static final String USERNAME = "gameattain";
     private static final char[] PASSWORD = { 'G', 'A', '.', '2', '0', '0', '9' };
 
-    private static final String USERNAME = null;
+
+//    private static final String HOST = "localhost";
+//    private static final int PORT = 27017;
+//    private static final String COLLECTION = "cascadingtest";
+//    private static final String DB = "gameattain";
+//
+//
+//    private static final String USERNAME = null;
+//    private static final char[] PASSWORD = null;
 
     private Mongo mongo;
     private DB db;
@@ -50,16 +59,16 @@ public class MongoDBTest extends ClusterTestCase {
     public void setUp() throws IOException {
         super.setUp();
 
-        mongo = new Mongo("localhost");
-        db = mongo.getDB(DB);
-        collection = db.getCollection(COLLECTION);
+//        mongo = new Mongo("localhost");
+//        db = mongo.getDB(DB);
+//        collection = db.getCollection(COLLECTION);
     }
 
     @Override
     public void tearDown() throws IOException {
 //        collection.drop();
 //        db.dropDatabase();
-        mongo.close();
+//        mongo.close();
     }
 
 
@@ -88,6 +97,8 @@ public class MongoDBTest extends ClusterTestCase {
         props.put(MongoDBConfiguration.DATABASE, DB);
         props.put(MongoDBConfiguration.HOSTNAME, HOST);
         props.put(MongoDBConfiguration.PORT, PORT);
+        props.put(MongoDBConfiguration.PASSWORD, new String(PASSWORD));
+        props.put(MongoDBConfiguration.USERNAME, USERNAME);
         Flow parseFlow = new FlowConnector(props).connect(source, mongoTap, parsePipe);
 
         parseFlow.complete();

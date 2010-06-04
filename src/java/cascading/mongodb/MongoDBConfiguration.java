@@ -176,5 +176,26 @@ public class MongoDBConfiguration
     {
         jobConf.setInt(PORT, port);
     }
+
+    String getUsername()
+    {
+        return jobConf.get(USERNAME, null);
+    }
+
+    void setUsername(String username)
+    {
+        jobConf.set(USERNAME, username);
+    }
+
+    char[] getPassword()
+    {
+        String s = jobConf.get(PASSWORD, null);
+        return s.toCharArray();
+    }
+
+    void setPassword(char[] password)
+    {
+        jobConf.set(PASSWORD, new String(password));
+    }
     
 }

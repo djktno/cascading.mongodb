@@ -103,11 +103,20 @@ public class MongoDBTap extends Tap {
 
     private DB getDB() {
 
+        log.debug("Requesting params for DB: {db=" + getMongo().getDB(getDBAddress().getDBName()) + "};");
         if (db == null) {
+            log.debug("DB was null - requesting refresh.");
             db = getMongo().getDB(getDBAddress().getDBName());
+
             if (username != null)
+            {
+                log.debug("Attempting to authenticate user...");
                 if (!db.authenticate(username, password))
+                {
                     throw new IllegalArgumentException("MongoDBTap: Auth Failed: {username = " + username + ", password = " + Arrays.toString(password) + "};");
+                }
+                log.debug("Apparently authentication passed for: {username=" + username + "};");
+            }
         }
 
         return db;
@@ -164,7 +173,7 @@ public class MongoDBTap extends Tap {
             return true;
 
         log.debug("Removing collection: {name = " + collection + "};");
-        //getDB().getCollection(collection).drop();
+        getDB().getCollection(collection).drop();
 
         return true;
 

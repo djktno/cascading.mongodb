@@ -1,13 +1,11 @@
 package cascading.mongodb;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.Mongo;
+import com.mongodb.*;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -17,17 +15,21 @@ import java.util.Set;
 public class MongoTest
 {
     private Mongo m;
+    private String username = "gameattain";
+    private char[] password = {'G', 'A', '.', '2', '0', '0', '9'};
+
+    //private DBAddress connection = new DBAddress("arrow.mongohq.com", 27025, "gameattain");
 
     @Before
     public void setup() throws Exception
     {
-       m = new Mongo("localhost"); 
+       m = new Mongo(new DBAddress("arrow.mongohq.com", 27025, "gameattain"));
     }
 
     @Test
     public void testMongoConnection() throws Exception
     {
-        Mongo pm = new Mongo("localhost");
+        Mongo pm = new Mongo(new DBAddress("arrow.mongohq.com", 27025, "gameattain"));
 
         Assert.assertNotNull(pm);
         System.out.println("Established connection with local Mongo instance.");
@@ -36,8 +38,13 @@ public class MongoTest
     @Test
     public void testGetCollection()
     {
-        DB db = m.getDB("testdb");
+        DB db = m.getDB("gameattain");
 
+
+        if (!db.authenticate(username, password))
+                {
+                    throw new IllegalArgumentException("MongoTest: Auth Failed: {username = " + username + ", password = " + Arrays.toString(password) + "};");
+                }
         Assert.assertNotNull(db);
 
         Set<String> collection = db.getCollectionNames();
@@ -54,7 +61,13 @@ public class MongoTest
     @Test
     public void testGetTestCollection()
     {
-        DB db = m.getDB("testdb");
+        DB db = m.getDB("gameattain");
+
+
+        if (!db.authenticate(username, password))
+                {
+                    throw new IllegalArgumentException("MongoTest: Auth Failed: {username = " + username + ", password = " + Arrays.toString(password) + "};");
+                }
 
         Assert.assertNotNull(db);
 
@@ -66,7 +79,13 @@ public class MongoTest
     @Test
     public void testInsertDoc()
     {
-        DB db = m.getDB("testdb");
+        DB db = m.getDB("gameattain");
+
+
+        if (!db.authenticate(username, password))
+                {
+                    throw new IllegalArgumentException("MongoTest: Auth Failed: {username = " + username + ", password = " + Arrays.toString(password) + "};");
+                }
         DBCollection collection = db.getCollection("foo");
 
         BasicDBObject doc = new BasicDBObject();
