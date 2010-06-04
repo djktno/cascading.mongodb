@@ -7,3 +7,4 @@ build
 *.ipr
 out
 dist
+jvm*.properties

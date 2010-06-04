@@ -51,21 +51,21 @@ public class MongoDBScheme extends Scheme {
     // {@inheritDoc}
     public void sink(TupleEntry tupleEntry, OutputCollector outputCollector) throws IOException {
 
-        BasicDBObject document = new BasicDBObject();
+//        BasicDBObject document = new BasicDBObject();
+//
+//        for (int i = 0; i < fields.length; i++) {
+//            Fields field = fields[i];
+//            TupleEntry values = tupleEntry.selectEntry(field);
+//
+//            for (int j = 0; j < values.getFields().size(); j++) {
+//                Fields fields = values.getFields();
+//                Tuple tuple = values.getTuple();
+//
+//                document.put(fields.get(j).toString(), tuple.getString(j));
+//            }
+//        }
 
-        for (int i = 0; i < fields.length; i++) {
-            Fields field = fields[i];
-            TupleEntry values = tupleEntry.selectEntry(field);
-
-            for (int j = 0; j < values.getFields().size(); j++) {
-                Fields fields = values.getFields();
-                Tuple tuple = values.getTuple();
-
-                document.put(fields.get(j).toString(), tuple.getString(j));
-            }
-        }
-
-        outputCollector.collect(null, document);
+        outputCollector.collect(null, tupleEntry);
 
 //        Tuple result = tupleEntry.selectTuple(getSinkFields());
 //        result = cleanTuple(result);
