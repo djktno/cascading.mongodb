@@ -19,10 +19,10 @@ public class MongoTapTest extends CascadingTestCase {
     public void testBadHostnameForTap()
     {
         Fields fields = new Fields("test");
-        MongoDBScheme scheme = new MongoDBScheme(MongoDBOutputFormat.class, fields);
+        MongoDBScheme scheme = new MongoDBScheme(MongoDBOutputFormat.class);
         try
         {
-            MongoDBTap tap = new MongoDBTap("foo.gameattain.com", 27107, "testdb", null, null, "test", scheme, null);
+            MongoDBTap tap = new MongoDBTap("foo.nist.gov", 27107, "testdb", null, null, new char[0], scheme, null);
         }
         catch (IllegalArgumentException e)
         {
@@ -30,26 +30,5 @@ public class MongoTapTest extends CascadingTestCase {
         }
 
         Assert.fail("Should have caught IllegalArgumentException.");
-    }
-
-    @Test
-    public void testDefaultPortAssigment()
-    {
-        Fields fields = new Fields("source", "title", "summary");
-        MongoDBScheme scheme = new MongoDBScheme(MongoDBOutputFormat.class, fields);
-        MongoDBTap tap = new MongoDBTap("localhost", "testdb", "test", scheme, null);
-
-        Assert.assertNotNull(tap);
-    }
-
-    //TODO: Remove this before publicizing
-    @Test
-    public void testGameAttainConnectivity()
-    {
-        Fields fields = new Fields("source", "title", "summary");
-        MongoDBScheme scheme = new MongoDBScheme(MongoDBOutputFormat.class, fields);
-        MongoDBTap tap = new MongoDBTap("flame.mongohq.com", 27067, "gameattain", null, null, "test", scheme, null);
-
-        Assert.assertNotNull(tap);
     }
 }

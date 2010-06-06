@@ -16,7 +16,6 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 
 /**
  * Date: May 21, 2010
@@ -29,7 +28,6 @@ public class MongoDBTap extends Tap {
     private static final String SCHEME = "mongodb:/";
     private static final int DEFAULT_MONGO_PORT = 27017;
 
-    private transient Mongo m;
     private transient DB db;
     private transient DBAddress dbAddress;
 
@@ -43,13 +41,24 @@ public class MongoDBTap extends Tap {
     private String username;
     private char[] password;
 
-    private CollectionDescriptor collectionDescriptor;
+    private boolean isAuthenticated = false;
 
-    public MongoDBTap(String hostname, int port, String database, String username, char[] password, String collection, MongoDBScheme scheme, CollectionDescriptor descriptor) {
+    private MongoDocument documentFormat;
+
+    /**
+     * Standard constructor for using MongoDB as a source only.
+     *
+     * @param hostname
+     * @param port
+     * @param database
+     * @param collection
+     * @param username
+     * @param password
+     * @param scheme
+     */
+    public MongoDBTap(String hostname, int port, String database, String collection, String username, char[] password, MongoDBScheme scheme) {
         super(scheme);
-
         this.connectionUrl = hostname + "/" + database + "/" + collection;
-        this.collectionDescriptor = descriptor;
         this.collection = collection;
         this.hostname = hostname;
         this.port = port;
@@ -58,72 +67,107 @@ public class MongoDBTap extends Tap {
         this.password = password;
 
         initMongo();
-        initDBAddress();
     }
 
-    public MongoDBTap(String hostname, String database, String collection, MongoDBScheme scheme, CollectionDescriptor descriptor)
-    {
-        this(hostname, DEFAULT_MONGO_PORT, database, null, null, collection, scheme, descriptor);
+    /**
+     * Constructor for using the tap as a sink (includes sink model object)
+     *
+     * @param hostname
+     * @param port
+     * @param database
+     * @param collection
+     * @param username
+     * @param password
+     * @param scheme
+     * @param documentDescriptor
+     */
+    public MongoDBTap(String hostname, int port, String database, String collection, String username, char[] password, MongoDBScheme scheme, MongoDocument documentDescriptor) {
+        this(hostname, port, database, collection, username, password, scheme);
+        this.documentFormat = documentDescriptor;
     }
 
-     private void initMongo() {
-        if (m == null) {
-            m = new Mongo(getDBAddress());
+    /**
+     * Constructor used for host with database on standard mongodb port.
+     *
+     * @param hostname
+     * @param database
+     * @param collection
+     * @param username
+     * @param password
+     * @param scheme
+     */
+    public MongoDBTap(String hostname, String database, String collection, String username, char[] password, MongoDBScheme scheme) {
+        this(hostname, DEFAULT_MONGO_PORT, database, collection, username, password, scheme);
+    }
+
+    /**
+     * Convenience constructor for using mongodb as a source when no authentication is necessary.
+     *
+     * @param hostname
+     * @param port
+     * @param database
+     * @param collection
+     * @param scheme
+     */
+    public MongoDBTap(String hostname, int port, String database, String collection, MongoDBScheme scheme) {
+        this(hostname, port, database, collection, null, null, scheme);
+    }
+
+    /**
+     * Convenience constructor for use of MongoDB as a sink when no security is present on the database.
+     *
+     * @param hostname
+     * @param port
+     * @param database
+     * @param collection
+     * @param scheme
+     * @param descriptor
+     */
+    public MongoDBTap(String hostname, int port, String database, String collection, MongoDBScheme scheme, MongoDocument descriptor) {
+        this(hostname, port, database, collection, null, null, scheme, descriptor);
+    }
+
+    private void initMongo() {
+
+        MongoWrapperFactoryFunctor functor = new MongoWrapperFactoryFunctor() {
+
+            @Override
+            public Mongo makeInstance(String hostname, int port, String database) throws UnknownHostException {
+                return new Mongo(new DBAddress(hostname, port, database));
+            }
+        };
+
+        MongoWrapper.setFactory(functor);
+
+        try {
+            Mongo m = MongoWrapper.instance(hostname, port, database);
+            if (null == username);
+            else {
+               m.getDB(database).authenticate(username, password);
+            }
+
+        } catch (UnknownHostException e) {
+            throw new IllegalArgumentException("Didn't recognize hostname for MongoDB.", e);
         }
+
+
     }
 
-     private void initDBAddress()
-    {
-        if (dbAddress == null)
-        {
-            try
-            {
-                dbAddress = new DBAddress(hostname, port, database);
-            }
-            catch (UnknownHostException e)
-            {
-                throw new IllegalArgumentException("hostname is not recognized: " + hostname, e);
-            }
-        }
-    }
+    DB getDBReference() {
 
-
-    private Mongo getMongo() {
-
-        initMongo();
-
-        return m;
-    }
-
-    private DBAddress getDBAddress()
-    {
-        initDBAddress();
-        return dbAddress;
-    }
-
-    private DB getDB() {
-
-        log.debug("Requesting params for DB: {db=" + getMongo().getDB(getDBAddress().getDBName()) + "};");
-        if (db == null) {
-            log.debug("DB was null - requesting refresh.");
-            db = getMongo().getDB(getDBAddress().getDBName());
-
-            if (username != null)
-            {
-                log.debug("Attempting to authenticate user...");
-                if (!db.authenticate(username, password))
-                {
-                    throw new IllegalArgumentException("MongoDBTap: Auth Failed: {username = " + username + ", password = " + Arrays.toString(password) + "};");
-                }
-                log.debug("Apparently authentication passed for: {username=" + username + "};");
-            }
+        DB db = null;
+        log.debug("Requesting params for DB: {db=" + database + "};");
+        try {
+            db = MongoWrapper.instance().getDB(database);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException("This should not happen.");
         }
 
         return db;
     }
 
     public boolean isSink() {
-        return collectionDescriptor != null;
+        return documentFormat != null;
     }
 
     public boolean isWriteDirect() {
@@ -144,7 +188,7 @@ public class MongoDBTap extends Tap {
     public TupleEntryCollector openForWrite(JobConf jobConf) throws IOException {
 
         if (!isSink())
-            throw new TapException("This tap cannot be used as a sink.");
+            throw new TapException("This tap cannot be used as a sink, no document descriptor defined.");
 
         return new TapCollector(this, jobConf);
     }
@@ -152,11 +196,11 @@ public class MongoDBTap extends Tap {
     @Override
     public boolean makeDirs(JobConf jobConf) throws IOException {
 
-        if (getDB().collectionExists(collection))
+        if (getDBReference().collectionExists(collection))
             return true;
 
         log.debug("Creating collection: {name = " + collection + "};");
-        DBCollection coll = getDB().getCollection(collection);
+        DBCollection coll = getDBReference().getCollection(collection);
 
 
         if (coll != null)
@@ -169,11 +213,11 @@ public class MongoDBTap extends Tap {
     @Override
     public boolean deletePath(JobConf jobConf) throws IOException {
 
-        if (!getDB().collectionExists(collection))
+        if (!getDBReference().collectionExists(collection))
             return true;
 
         log.debug("Removing collection: {name = " + collection + "};");
-        getDB().getCollection(collection).drop();
+        getDBReference().getCollection(collection).drop();
 
         return true;
 
@@ -185,7 +229,7 @@ public class MongoDBTap extends Tap {
         if (!isSink())
             return true;
 
-        return getDB().collectionExists(collection);
+        return getDBReference().collectionExists(collection);
     }
 
     @Override
@@ -212,11 +256,20 @@ public class MongoDBTap extends Tap {
 
     @Override
     public String toString() {
-        return "MongoDBTap {host=" + getDBAddress().getHost() + ", port=" + getDBAddress().getPort() + ", collection=" + collection + "}";
+        return "MongoDBTap {host=" + hostname + ", port=" + port + ", collection=" + collection + "}";
     }
 
 
     public String getCollection() {
         return collection;
+    }
+
+    public String getDatabase()
+    {
+        return database;
+    }
+
+    public MongoDocument getDocumentFormat() {
+        return documentFormat;
     }
 }

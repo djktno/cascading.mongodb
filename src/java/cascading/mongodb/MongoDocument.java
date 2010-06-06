@@ -1,11 +1,15 @@
 package cascading.mongodb;
 
+import cascading.tuple.Tuple;
+import cascading.tuple.TupleEntry;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoException;
 
+import java.io.Serializable;
+
 /**
  * Objects that are read from/written to MongoDB should implement
- * <code>MongoWritable</code>. MongoWritable, is similar to {@link cascading.jdbc.DBWritable}
+ * <code>MongoDocument</code>. MongoDocument, is similar to {@link cascading.jdbc.DBWritable}
  * except that the {@link #write(BasicDBObject)} method takes a
  * {@link BasicDBObject}, and {@link #readFields()}
  * takes a {@link BasicDBObject}.
@@ -21,7 +25,7 @@ import com.mongodb.MongoException;
  * </pre>
  * then we can read/write the tuples from/to the document with :
  * <p><pre>
- * public class MyWritable implements Writable, MongoWritable {
+ * public class MyWritable implements Writable, MongoDocument {
  *   // Some data
  *   private int counter;
  *   private long timestamp;
@@ -50,10 +54,10 @@ import com.mongodb.MongoException;
  * }
  * </pre></p>
  */
-public interface MongoWritable
+public interface MongoDocument extends Serializable
 {
-    public void write(BasicDBObject document) throws MongoException;
-
-
+    public void write(TupleEntry tupleEntry) throws MongoException;
     public void readFields(BasicDBObject document) throws MongoException;
+    public BasicDBObject getDocument();
+    public Tuple getTuple();
 }
