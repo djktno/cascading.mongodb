@@ -32,3 +32,5 @@ Using
   Cascading dependencies.
 
   You must also include the mongo-java-driver library compatible with your database.
+
+  The current master branch only is usable for sinking to MongoDB.  The API for that is still a little rough, and subject to change once I can simplify the parameters.
