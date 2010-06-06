@@ -1,6 +1,6 @@
 This is the Cascading.MongoDB module.
 
- It provides support for writing data to MongoDB via
+ It provides support for writing data to MongoDB 
  when bound to a Cascading data processing flow.
 
  Cascading is a feature rich API for defining and executing complex,
