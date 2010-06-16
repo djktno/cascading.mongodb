@@ -90,11 +90,16 @@ public class MongoDBOutputFormat<K extends MongoDocument, V extends TupleEntry> 
 
             while (true) {
                 try {
+		    db.requestStart();
                     DBCollection dbc = db.getCollection(collection);
-                    dbc.apply(d, true);
-
+                    //dbc.apply(d, true);
+		    
                     MongoDBOutputFormat.log.debug("Inserting document into database...");
                     dbc.save(d);
+                    //does safe inserts
+		    CommandResult code = db.getLastError();
+		    if (!code.ok())
+		        throw new MongoException("Insert failed: " + code.getErrorMessage());
                 }
                 catch (MongoException e) {
                     if (insertAttemptsRemaining >= 0) {
@@ -115,6 +120,10 @@ public class MongoDBOutputFormat<K extends MongoDocument, V extends TupleEntry> 
                     MongoDBOutputFormat.log.error("Caught generic exception saving document.", e);
                     throw new IOException(e);
                 }
+		finally
+		{
+		    db.requestDone();
+		}	
                 insertAttemptsRemaining = retryAttempts;
                 break;
             }
