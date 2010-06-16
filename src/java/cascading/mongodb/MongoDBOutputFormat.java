@@ -4,6 +4,7 @@ import cascading.tuple.TupleEntry;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
 import com.mongodb.MongoException;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapred.JobConf;
@@ -97,9 +98,9 @@ public class MongoDBOutputFormat<K extends MongoDocument, V extends TupleEntry> 
                     MongoDBOutputFormat.log.debug("Inserting document into database...");
                     dbc.save(d);
                     //does safe inserts
-		    CommandResult code = db.getLastError();
-		    if (!code.ok())
-		        throw new MongoException("Insert failed: " + code.getErrorMessage());
+		    DBObject code = db.getLastError();
+		    if (code.get("err") != null)
+		        throw new MongoException("Insert failed: " + code.get("err"));
                 }
                 catch (MongoException e) {
                     if (insertAttemptsRemaining >= 0) {
