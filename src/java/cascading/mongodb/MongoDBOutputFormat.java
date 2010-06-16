@@ -1,11 +1,7 @@
 package cascading.mongodb;
 
 import cascading.tuple.TupleEntry;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBObject;
-import com.mongodb.MongoException;
+import com.mongodb.*;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputFormat;
@@ -85,22 +81,25 @@ public class MongoDBOutputFormat<K extends MongoDocument, V extends TupleEntry> 
 
             k.write((TupleEntry) v);
 
+            //reset the MongoDocument with a new document before writing.
+            //TODO: Clean this up.  There is some notion that this is not the idiom I want here.
+            k.setDocument(new BasicDBObject());
+
             BasicDBObject d = k.getDocument();
 
             int insertAttemptsRemaining = retryAttempts;
 
             while (true) {
                 try {
-		    db.requestStart();
+                    db.requestStart();
                     DBCollection dbc = db.getCollection(collection);
-                    //dbc.apply(d, true);
-		    
+
                     MongoDBOutputFormat.log.debug("Inserting document into database...");
                     dbc.save(d);
                     //does safe inserts
-		    DBObject code = db.getLastError();
-		    if (code.get("err") != null)
-		        throw new MongoException("Insert failed: " + code.get("err"));
+                    DBObject code = db.getLastError();
+                    if (code.get("err") != null)
+                        throw new MongoException("Insert failed: " + code.get("err"));
                 }
                 catch (MongoException e) {
                     if (insertAttemptsRemaining >= 0) {
@@ -121,10 +120,9 @@ public class MongoDBOutputFormat<K extends MongoDocument, V extends TupleEntry> 
                     MongoDBOutputFormat.log.error("Caught generic exception saving document.", e);
                     throw new IOException(e);
                 }
-		finally
-		{
-		    db.requestDone();
-		}	
+                finally {
+                    db.requestDone();
+                }
                 insertAttemptsRemaining = retryAttempts;
                 break;
             }
@@ -134,7 +132,7 @@ public class MongoDBOutputFormat<K extends MongoDocument, V extends TupleEntry> 
          * {@inheritDoc}
          */
         public void close(Reporter reporter) throws IOException {
-
+            //do nothing
         }
 
 

@@ -131,7 +131,6 @@ public class MongoDBTap extends Tap {
 
         MongoWrapperFactoryFunctor functor = new MongoWrapperFactoryFunctor() {
 
-            @Override
             public Mongo makeInstance(String hostname, int port, String database) throws UnknownHostException {
                 return new Mongo(new DBAddress(hostname, port, database));
             }

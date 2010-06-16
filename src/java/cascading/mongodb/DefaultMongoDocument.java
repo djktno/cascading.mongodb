@@ -47,7 +47,7 @@ public class DefaultMongoDocument implements MongoDocument {
         this.selector = selectorFields;
     }
 
-    @Override
+
     public void write(TupleEntry tupleEntry) throws MongoException {
 
 
@@ -60,18 +60,24 @@ public class DefaultMongoDocument implements MongoDocument {
 
     }
 
-    @Override
+
     public void readFields(BasicDBObject document) throws MongoException {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    @Override
+
     public BasicDBObject getDocument() {
         return document;
     }
 
-    @Override
+    public void setDocument(BasicDBObject document) throws MongoException {
+        this.document = document;
+    }
+
+
     public Tuple getTuple() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
+
+
 }
