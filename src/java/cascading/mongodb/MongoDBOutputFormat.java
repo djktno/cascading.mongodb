@@ -79,11 +79,11 @@ public class MongoDBOutputFormat<K extends MongoDocument, V extends TupleEntry> 
             if (!(k instanceof MongoDocument))
                 throw new IllegalArgumentException("Expected " + MongoDocument.class.getName() + ", received " + k.getClass().getName());
 
-            k.write((TupleEntry) v);
-
             //reset the MongoDocument with a new document before writing.
             //TODO: Clean this up.  There is some notion that this is not the idiom I want here.
             k.setDocument(new BasicDBObject());
+
+            k.write((TupleEntry) v);
 
             BasicDBObject d = k.getDocument();
 
