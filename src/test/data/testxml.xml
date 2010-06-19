@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x:test xmlns:x="http://cascading.mongodb.com/test">
+    <x:entity>Entity1</x:entity>
+    <x:entity>Entity2</x:entity>
+    <x:entity>Entity3</x:entity>
+</x:test>
