@@ -65,7 +65,6 @@ public class DefaultMongoDocument implements MongoDocument {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
-
     public BasicDBObject getDocument() {
         return document;
     }
@@ -73,8 +72,7 @@ public class DefaultMongoDocument implements MongoDocument {
     public void setDocument(BasicDBObject document) throws MongoException {
         this.document = document;
     }
-
-
+    
     public Tuple getTuple() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }

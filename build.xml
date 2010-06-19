@@ -14,7 +14,7 @@
 <project name="cascading-mongodb" default="build" basedir=".">
 
   <!-- load properties first -->
-  <!--<property file="${user.home}/.${ant.project.name}.build.properties" />-->
+  <property file="${user.home}/.${ant.project.name}.build.properties" />
   <property file="${basedir}/build.properties"/>
 
   <property file="${basedir}/version.properties"/>
