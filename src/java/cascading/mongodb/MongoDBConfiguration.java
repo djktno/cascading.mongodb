@@ -41,16 +41,24 @@ public class MongoDBConfiguration {
 
     public static final String COLLECTION = "mapred.mongodb.collection.name";
 
-    public static final String OUTPUT_DOCUMENT_ATTRIBUTE_NAMES = "mapred.mongodb.output.document.attribute.names";
+    public static final String HOST = "mapred.mongodb.host.name"; 
+
+    public static final String PORT = "mapred.mongodb.port";
 
 
-    public static void configureMongoDB(JobConf jobConf, String database, String collection) {
+
+
+    public static void configureMongoDB(JobConf jobConf, String database, String collection, String hostname, int port) {
 
         if (database != null && !"".equals(database))
             jobConf.set(DATABASE, database);
 
         if (collection != null && !"".equals(collection))
             jobConf.set(COLLECTION, collection);
+
+        jobConf.set(HOST, hostname);
+
+        jobConf.setInt(PORT, port);
     }
 
     MongoDBConfiguration(JobConf jobConf) {
@@ -74,13 +82,26 @@ public class MongoDBConfiguration {
         jobConf.set(DATABASE, database);
     }
 
-    String[] getDocumentAttributeNames() {
-        return jobConf.getStrings(OUTPUT_DOCUMENT_ATTRIBUTE_NAMES);
+    String getHost() {
+        return jobConf.get(HOST);
     }
 
-    void setDocumentAttributeNames(String... attributeNames) {
-        jobConf.setStrings(OUTPUT_DOCUMENT_ATTRIBUTE_NAMES, attributeNames);
+    void setHost(String host)
+    {
+        jobConf.set(HOST, host);
     }
+
+    int getPort()
+    {
+        return jobConf.getInt(PORT, 27017);
+    }
+
+    void setPort(int port)
+    {
+        jobConf.setInt(PORT, port);
+    }
+
+
 
 
 }

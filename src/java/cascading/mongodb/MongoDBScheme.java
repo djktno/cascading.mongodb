@@ -37,10 +37,13 @@ public class MongoDBScheme extends Scheme {
 
         String collection = ((MongoDBTap) tap).getCollection();
         String database = ((MongoDBTap) tap).getDatabase();
+        int port = ((MongoDBTap) tap).getPort();
+        String host = ((MongoDBTap) tap).getHostname();
         documentFormat = ((MongoDBTap) tap).getDocumentFormat();
 
+
         jobConf.setOutputFormat(MongoDBOutputFormat.class);
-        MongoDBConfiguration.configureMongoDB(jobConf, database, collection);
+        MongoDBConfiguration.configureMongoDB(jobConf, database, collection, host, port);
         
     }
 

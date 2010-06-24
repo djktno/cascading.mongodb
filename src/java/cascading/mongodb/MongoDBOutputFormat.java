@@ -33,7 +33,7 @@ public class MongoDBOutputFormat<K extends MongoDocument, V extends TupleEntry> 
         String collection = dbConfiguration.getCollection();
         String database = dbConfiguration.getDatabase();
 
-        return new MongoDBRecordWriter(database, collection);
+        return new MongoDBRecordWriter(dbConfiguration, collection);
 
     }
 
@@ -54,12 +54,15 @@ public class MongoDBOutputFormat<K extends MongoDocument, V extends TupleEntry> 
         private String collection;
         private int retryAttempts;
 
-        protected MongoDBRecordWriter(String database, String collection) {
+        protected MongoDBRecordWriter(MongoDBConfiguration dbConfiguration, String collection) {
 
             this.collection = collection;
             this.retryAttempts = 10;
             try {
-                this.db = MongoWrapper.instance().getDB(database);
+                String hostname = dbConfiguration.getHost();
+                int port = dbConfiguration.getPort();
+                String database = dbConfiguration.getDatabase();
+                this.db = MongoWrapper.instance(hostname, port, database).getDB(database);
             }
             catch (UnknownHostException e) {
                 throw new RuntimeException("This should not happen.");
@@ -137,4 +140,5 @@ public class MongoDBOutputFormat<K extends MongoDocument, V extends TupleEntry> 
 
 
     }
+    
 }

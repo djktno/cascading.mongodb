@@ -271,4 +271,12 @@ public class MongoDBTap extends Tap {
     public MongoDocument getDocumentFormat() {
         return documentFormat;
     }
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public int getPort() {
+        return port;
+    }
 }
