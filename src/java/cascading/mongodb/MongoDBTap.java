@@ -129,6 +129,7 @@ public class MongoDBTap extends Tap {
 
     private void initMongo() {
 
+
         MongoWrapperFactoryFunctor functor = new MongoWrapperFactoryFunctor() {
 
             public Mongo makeInstance(String hostname, int port, String database) throws UnknownHostException {
@@ -157,7 +158,7 @@ public class MongoDBTap extends Tap {
         DB db = null;
         log.debug("Requesting params for DB: {db=" + database + "};");
         try {
-            db = MongoWrapper.instance().getDB(database);
+            db = MongoWrapper.instance(hostname, port, database).getDB(database);
         } catch (UnknownHostException e) {
             throw new RuntimeException("This should not happen.");
         }
@@ -241,6 +242,8 @@ public class MongoDBTap extends Tap {
 
         if (!isSink())
             return;
+
+        MongoDBConfiguration.configureMongoDB(jobConf, database, collection, hostname, port);
 
         log.debug("Sinking to collection: {name=" + collection + "};");
 

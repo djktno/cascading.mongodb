@@ -79,7 +79,7 @@ public class MongoWrapperTest {
         try {
             m = MongoWrapper.instance(HOSTNAME, PORT, DATABASE);
             t = MongoWrapper.instance(HOSTNAME, PORT, DATABASE);
-            w = MongoWrapper.instance();
+            w = MongoWrapper.instance(HOSTNAME, PORT, DATABASE);
         } catch (UnknownHostException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }

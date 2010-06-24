@@ -44,19 +44,19 @@ public class MongoWrapper {
         return new Mongo(new DBAddress(hostname, port, database));
     }
 
-    static private Mongo makeInstance() throws UnknownHostException
-    {
-        return new Mongo();
-    }
-
-    static public synchronized Mongo instance() throws UnknownHostException
-    {
-        if (null == _instance)
-        {
-            _instance = makeInstance();
-        }
-        return _instance;
-    }
+//    static private Mongo makeInstance() throws UnknownHostException
+//    {
+//        return new Mongo();
+//    }
+//
+//    static public synchronized Mongo instance() throws UnknownHostException
+//    {
+//        if (null == _instance)
+//        {
+//            _instance = makeInstance();
+//        }
+//        return _instance;
+//    }
 
     static public synchronized Mongo instance(String hostname, int port, String database) throws UnknownHostException
     {
