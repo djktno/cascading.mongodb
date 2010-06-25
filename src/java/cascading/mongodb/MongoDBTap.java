@@ -1,15 +1,13 @@
 package cascading.mongodb;
 
+import cascading.flow.Flow;
 import cascading.tap.Tap;
 import cascading.tap.TapException;
 import cascading.tap.hadoop.TapCollector;
 import cascading.tap.hadoop.TapIterator;
 import cascading.tuple.TupleEntryCollector;
 import cascading.tuple.TupleEntryIterator;
-import com.mongodb.DB;
-import com.mongodb.DBAddress;
-import com.mongodb.DBCollection;
-import com.mongodb.Mongo;
+import com.mongodb.*;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.log4j.Logger;
@@ -42,6 +40,7 @@ public class MongoDBTap extends Tap {
     private char[] password;
 
     private boolean isAuthenticated = false;
+    private boolean isMongoInitialized = false;
 
     private MongoDocument documentFormat;
 
@@ -114,7 +113,7 @@ public class MongoDBTap extends Tap {
     }
 
     /**
-     * Convenience constructor for use of MongoDB as a sink when no security is present on the database.
+     * Convenience constructor for use of MongoDB as a sink when no authentication is necessary.
      *
      * @param hostname
      * @param port
@@ -129,6 +128,7 @@ public class MongoDBTap extends Tap {
 
     private void initMongo() {
 
+        log.info("initMongo(): Initializing Mongo {user = " + username + ", hostname = " + hostname + ", port = " + port + "};");
 
         MongoWrapperFactoryFunctor functor = new MongoWrapperFactoryFunctor() {
 
@@ -140,12 +140,28 @@ public class MongoDBTap extends Tap {
         MongoWrapper.setFactory(functor);
 
         try {
-            Mongo m = MongoWrapper.instance(hostname, port, database);
-            if (null == username);
+            Mongo m = MongoWrapper.initialize(hostname, port, database);
+            MongoWrapper.setInstance(m);
+            if (null == username) ;
             else {
-               m.getDB(database).authenticate(username, password);
+                try
+                {
+                    isAuthenticated = m.getDB(database).authenticate(username, password);
+                }
+                catch(IllegalStateException e)
+                {
+                    //we may have called authenticate twice - eat this.
+                    log.warn("May have reauthenticated: " + e.getMessage());
+                }
+
+
             }
 
+            if (MongoWrapper.instance() != null)
+            {
+                log.info("MongoWrapper {" + MongoWrapper.class.toString() + "} is not null, and neither is the Mongo instance {" + MongoWrapper.instance() + "} while initializing.");
+                isMongoInitialized = true;
+            }
         } catch (UnknownHostException e) {
             throw new IllegalArgumentException("Didn't recognize hostname for MongoDB.", e);
         }
@@ -155,12 +171,16 @@ public class MongoDBTap extends Tap {
 
     DB getDBReference() {
 
-        DB db = null;
-        log.debug("Requesting params for DB: {db=" + database + "};");
+        log.info("getDBReference: Requesting params for DB: {db=" + database + "};");
         try {
-            db = MongoWrapper.instance(hostname, port, database).getDB(database);
+
+            Mongo m = MongoWrapper.instance();
+            log.info("MongoWrapper {" + MongoWrapper.class.toString() + "}.  Mongo {" + m + "} " + ((m == null) ? " is " : " is not ") + " null." );
+            db = MongoWrapper.instance().getDB(database);
+            log.info("Got database reference: " + db.getName());
+
         } catch (UnknownHostException e) {
-            throw new RuntimeException("This should not happen.");
+            throw new RuntimeException("Unknown host passed into configuration for MongoDB.");
         }
 
         return db;
@@ -196,10 +216,12 @@ public class MongoDBTap extends Tap {
     @Override
     public boolean makeDirs(JobConf jobConf) throws IOException {
 
+        log.info("makeDirs(): entering");
+
         if (getDBReference().collectionExists(collection))
             return true;
 
-        log.debug("Creating collection: {name = " + collection + "};");
+        log.info("Creating collection: {name = " + collection + "};");
         DBCollection coll = getDBReference().getCollection(collection);
 
 
@@ -243,9 +265,14 @@ public class MongoDBTap extends Tap {
         if (!isSink())
             return;
 
-        MongoDBConfiguration.configureMongoDB(jobConf, database, collection, hostname, port);
+        log.info("sinkInit(): entering");
 
-        log.debug("Sinking to collection: {name=" + collection + "};");
+        MongoDBConfiguration.configureMongoDB(jobConf, database, collection, hostname, port);
+        initMongo();
+
+
+
+        log.info("Sinking to collection: {name=" + collection + "};");
 
         if (isReplace() && jobConf.get("mapred.task.partition") == null) {
             deletePath(jobConf);
@@ -254,6 +281,13 @@ public class MongoDBTap extends Tap {
         makeDirs(jobConf);
         super.sinkInit(jobConf);
 
+    }
+
+    @Override
+    public void flowInit(Flow flow)
+    {
+        JobConf conf = flow.getJobConf();
+        log.info("MongoDBTap.flowInit(): Initializing flow...");
     }
 
     @Override
@@ -266,8 +300,7 @@ public class MongoDBTap extends Tap {
         return collection;
     }
 
-    public String getDatabase()
-    {
+    public String getDatabase() {
         return database;
     }
 
