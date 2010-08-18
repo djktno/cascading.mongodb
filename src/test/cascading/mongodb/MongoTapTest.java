@@ -23,7 +23,7 @@ public class MongoTapTest extends CascadingTestCase {
     public void testBadHostnameForTap()
     {
         Fields fields = new Fields("test");
-        MongoDBScheme scheme = new MongoDBScheme(MongoDBOutputFormat.class);
+        MongoDBScheme scheme = new MongoDBScheme(MongoDBOutputFormat.class, MongoDBInputFormat.class);
         try
         {
             MongoDBTap tap = new MongoDBTap("foo.bbbbbbbb.gov", 27107, "testdb", null, null, new char[0], scheme, null);

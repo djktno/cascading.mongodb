@@ -7,6 +7,7 @@ import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
+import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.OutputFormat;
@@ -23,14 +24,30 @@ public class MongoDBScheme extends Scheme {
     private static final Logger log = Logger.getLogger(MongoDBScheme.class.getName());
 
     private Class<? extends OutputFormat> outputFormatClass;
+    private Class<? extends InputFormat> inputFormatClass;
     private MongoDocument documentFormat;
 
-    public MongoDBScheme(Class<? extends MongoDBOutputFormat> outputFormatClass) {
+    public MongoDBScheme(Class<? extends MongoDBOutputFormat> outputFormatClass, Class<? extends MongoDBInputFormat> inputFormatClass) {
         this.outputFormatClass = outputFormatClass;
-    }    
+        this.inputFormatClass = inputFormatClass;
+    }
+
+    public MongoDBScheme(Class<? extends MongoDBInputFormat> inputFormatClass) {
+        this.inputFormatClass = inputFormatClass;
+    }
 
     public void sourceInit(Tap tap, JobConf jobConf) throws IOException {
-        //To change body of implemented methods use File | Settings | File Templates.
+
+        String collection = ((MongoDBTap) tap).getCollection();
+        String database = ((MongoDBTap) tap).getDatabase();
+        int port = ((MongoDBTap) tap).getPort();
+        String host = ((MongoDBTap) tap).getHostname();
+        documentFormat = ((MongoDBTap) tap).getDocumentFormat();
+
+        if( inputFormatClass != null )
+            jobConf.setInputFormat( inputFormatClass );
+        MongoDBConfiguration.configureMongoDB(jobConf, database, collection, host, port);
+        
     }
 
     public void sinkInit(Tap tap, JobConf jobConf) throws IOException {
@@ -48,7 +65,7 @@ public class MongoDBScheme extends Scheme {
     }
 
     public Tuple source(Object key, Object value) {
-        return new Tuple();
+        return ((MongoDocument) value).getTupleEntry().getTuple();
     }
 
     // {@inheritDoc}

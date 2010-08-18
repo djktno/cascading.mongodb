@@ -30,6 +30,9 @@ import cascading.tuple.TupleEntry;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoException;
 
+import java.util.Iterator;
+import java.util.Set;
+
 /**
  * Date: Jun 6, 2010
  * Time: 8:06:39 AM
@@ -38,6 +41,7 @@ public class DefaultMongoDocument implements MongoDocument {
 
     BasicDBObject document = new BasicDBObject();
     Fields selector = new Fields();
+    transient TupleEntry tupleEntry = new TupleEntry();
 
     public DefaultMongoDocument() {
 
@@ -62,7 +66,25 @@ public class DefaultMongoDocument implements MongoDocument {
 
 
     public void readFields(BasicDBObject document) throws MongoException {
-        //To change body of implemented methods use File | Settings | File Templates.
+
+        Set<String> keySet = document.keySet();
+        if (document.keySet().isEmpty())
+            return;
+
+        Fields fields = new Fields();
+        Tuple tuple = new Tuple();
+
+
+        for (Iterator<String> i = keySet.iterator(); i.hasNext();) {
+            String key = i.next();
+            Object value = document.get(key);
+
+            fields.append(new Fields(key));
+            tuple.add(value);
+        }
+
+        tupleEntry = new TupleEntry(fields, tuple);
+
     }
 
     public BasicDBObject getDocument() {
@@ -72,9 +94,9 @@ public class DefaultMongoDocument implements MongoDocument {
     public void setDocument(BasicDBObject document) throws MongoException {
         this.document = document;
     }
-    
-    public Tuple getTuple() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+
+    public TupleEntry getTupleEntry() {
+        return tupleEntry;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
 

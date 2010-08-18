@@ -11,6 +11,7 @@ import com.mongodb.DBAddress;
 import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.log4j.Logger;
 
@@ -254,6 +255,17 @@ public class MongoDBTap extends Tap {
         makeDirs(jobConf);
         super.sinkInit(jobConf);
 
+    }
+
+    @Override
+    public void sourceInit(JobConf jobConf) throws IOException
+    {
+        // a hack for MultiInputFormat to see that there is a child format
+        FileInputFormat.setInputPaths( jobConf, getPath() );
+
+        log.debug("Sourcing from collection: {name= " + collection + "};");
+
+        super.sourceInit(jobConf);
     }
 
     @Override

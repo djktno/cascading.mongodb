@@ -18,7 +18,7 @@ public interface MongoDocument extends Serializable
     public void readFields(BasicDBObject document) throws MongoException;
     public BasicDBObject getDocument();
     void setDocument(BasicDBObject document) throws MongoException;
-    public Tuple getTuple();
+    public TupleEntry getTupleEntry();
 
 
 }

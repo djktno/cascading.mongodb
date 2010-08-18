@@ -39,7 +39,7 @@ public class TestMongoDocumentImpl implements MongoDocument
         this.document = document;
     }
 
-    public Tuple getTuple() {
+    public TupleEntry getTupleEntry() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 }
