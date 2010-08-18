@@ -62,7 +62,7 @@ public class MongoDBOutputFormat<K extends MongoDocument, V extends TupleEntry> 
                 String hostname = dbConfiguration.getHost();
                 int port = dbConfiguration.getPort();
                 String database = dbConfiguration.getDatabase();
-                this.db = MongoWrapper.instance(hostname, port, database).getDB(database);
+                this.db = MongoWrapper.initialize(hostname, port, database).getDB(database);
             }
             catch (UnknownHostException e) {
                 throw new RuntimeException("This should not happen.");

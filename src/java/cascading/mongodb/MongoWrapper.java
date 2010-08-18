@@ -39,43 +39,39 @@ public class MongoWrapper {
 
     static private Mongo _instance = null;
 
-    static private Mongo makeInstance(String hostname, int port, String database) throws UnknownHostException
-    {
+    static private Mongo makeInstance(String hostname, int port, String database) throws UnknownHostException {
+
         return new Mongo(new DBAddress(hostname, port, database));
+
     }
 
-//    static private Mongo makeInstance() throws UnknownHostException
-//    {
-//        return new Mongo();
-//    }
-//
-//    static public synchronized Mongo instance() throws UnknownHostException
-//    {
-//        if (null == _instance)
-//        {
-//            _instance = makeInstance();
-//        }
-//        return _instance;
-//    }
-
-    static public synchronized Mongo instance(String hostname, int port, String database) throws UnknownHostException
+    static public synchronized boolean isMongoInitialized()
     {
+        return (_instance != null);
+    }
+
+    static public synchronized Mongo instance() throws UnknownHostException {
         if (null == _instance)
-        {
+            throw new NotInitializedException("Mongo needs to be initialized before it can be used.");
+        return _instance;
+    }
+
+    static public synchronized Mongo initialize(String hostname, int port, String database) throws UnknownHostException {
+        if (null == _instance) {
             _instance = (null == _factory) ? makeInstance(hostname, port, database) : _factory.makeInstance(hostname, port, database);
         }
         return _instance;
     }
 
-    static public synchronized void setFactory(MongoWrapperFactoryFunctor factory)
-    {
+    static public synchronized void setFactory(MongoWrapperFactoryFunctor factory) {
         _factory = factory;
     }
 
-    static public synchronized void setInstance(Mongo instance)
-    {
+    static public synchronized void setInstance(Mongo instance) {
         _instance = instance;
     }
+
     
+
 
 }

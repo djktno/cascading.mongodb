@@ -24,7 +24,6 @@
 
 package cascading.mongodb;
 
-import com.mongodb.DB;
 import com.mongodb.DBAddress;
 import com.mongodb.Mongo;
 import org.junit.After;
@@ -77,9 +76,15 @@ public class MongoWrapperTest {
         Mongo w = null;
 
         try {
-            m = MongoWrapper.instance(HOSTNAME, PORT, DATABASE);
-            t = MongoWrapper.instance(HOSTNAME, PORT, DATABASE);
-            w = MongoWrapper.instance(HOSTNAME, PORT, DATABASE);
+            m = MongoWrapper.initialize(HOSTNAME, PORT, DATABASE);
+
+            if (!MongoWrapper.isMongoInitialized())
+            {
+                Assert.fail("Mongo was not initialized.");
+            }
+
+            t = MongoWrapper.instance();
+            w = MongoWrapper.instance();
         } catch (UnknownHostException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
