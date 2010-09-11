@@ -83,7 +83,7 @@ public class MongoDBOutputFormat<K extends MongoDocument, V extends TupleEntry> 
                 throw new IllegalArgumentException("Expected " + MongoDocument.class.getName() + ", received " + k.getClass().getName());
 
             //reset the MongoDocument with a new document before writing.
-            //TODO: Clean this up.  There is some notion that this is not the idiom I want here.
+            //TODO: Clean this up.  I have some notion that this is not the idiom I want here.
             k.setDocument(new BasicDBObject());
 
             k.write((TupleEntry) v);
