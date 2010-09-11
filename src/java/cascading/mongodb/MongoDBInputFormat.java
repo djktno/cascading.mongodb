@@ -31,7 +31,7 @@ public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> i
         String database = dbConf.getDatabase();
         String collection = dbConf.getCollection();
 
-        Mongo m = MongoWrapper.instance(host, port, database);
+        Mongo m = MongoWrapper.instance();
         DB db = m.getDB(database);
 
         //Need the document used for query.
@@ -90,7 +90,7 @@ public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> i
             String database = dbConf.getDatabase();
             String collection = dbConf.getCollection();
 
-            Mongo m = MongoWrapper.instance(host, port, database);
+            Mongo m = MongoWrapper.instance();
             DB db = m.getDB(database);
 
             DBCollection dbcollection = db.getCollection(collection);
