@@ -152,7 +152,7 @@ public class MongoDBTap extends Tap {
                 catch(IllegalStateException e)
                 {
                     //we may have called authenticate twice - eat this.
-                    log.warn("May have reauthenticated: " + e.getMessage());
+                    //log.warn("May have reauthenticated: " + e.getMessage());
                 }
 
 

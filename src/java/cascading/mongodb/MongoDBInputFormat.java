@@ -1,5 +1,8 @@
 package cascading.mongodb;
 
+import cascading.mongodb.document.DefaultMongoDocument;
+import cascading.mongodb.document.GameDocument;
+import cascading.mongodb.document.SelectGameTrainingQuery;
 import cascading.tuple.TupleEntry;
 import com.mongodb.*;
 import org.apache.hadoop.io.LongWritable;
@@ -34,10 +37,9 @@ public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> i
         Mongo m = MongoWrapper.instance();
         DB db = m.getDB(database);
 
-        //Need the document used for query.
-        BasicDBObject dbObject = new BasicDBObject();
-        dbObject.put("title", "A");
-        int count = db.getCollection(collection).find(dbObject).count();
+        DBCollection dbCollection = db.getCollection(collection);
+
+        int count = (int) new SelectGameTrainingQuery().count(dbCollection);
 
         if (limit != -1) {
             count = Math.min(limit, count);
@@ -66,7 +68,7 @@ public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> i
 
         //Class inputClass = jobConf.getInputClass();
 
-        return new MongoDBRecordReader((Class<K>) DefaultMongoDocument.class, jobConf);
+        return new MongoDBRecordReader((Class<K>) GameDocument.class, jobConf);
 
     }
 
@@ -95,15 +97,12 @@ public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> i
 
             DBCollection dbcollection = db.getCollection(collection);
 
-            //Need the document used for query.
-            BasicDBObject dbObject = new BasicDBObject();
-            dbObject.put("title", "A");
 
-            cursor = dbcollection.find(dbObject);
-            //DBObject o = dbcollection.findOne(dbObject);
-            CommandResult cr = db.getLastError();
+            //log.info("Query to " + collection + " using " + dbObject);
 
-            String s = cr.getErrorMessage();
+            cursor = new SelectGameTrainingQuery().find(dbcollection);
+
+            log.info(cursor.explain());
 
         }
 
@@ -144,11 +143,19 @@ public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> i
         }
 
         public void close() throws IOException {
-            
+
         }
 
         public float getProgress() throws IOException {
-            return 0;  //To change body of implemented methods use File | Settings | File Templates.
+
+            // DK - Can't use cursor.length (array mode) after using next() or hasNext() (iterator mode).
+            // See http://grepcode.com/file/repo1.maven.org/maven2/org.mongodb/mongo-java-driver/2.0rc1/com/mongodb/DBCursor.java
+            // Filed as bug (5128913).
+//            if (cursor.length() > 0)
+//                return (float) (pos / cursor.length());
+//            if (cursor.count() > 0)
+//                return (float) (pos / cursor.count());
+            return 0;
         }
     }
 
@@ -166,7 +173,7 @@ public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> i
         }
 
         public String[] getLocations() throws IOException {
-            return new String[]{};  //Need to support sharding, locality
+            return new String[]{};
         }
 
         public void write(DataOutput out) throws IOException {

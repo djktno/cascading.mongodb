@@ -22,8 +22,9 @@
  * limitations under the License.
  */
 
-package cascading.mongodb;
+package cascading.mongodb.document;
 
+import cascading.mongodb.MongoDocument;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
