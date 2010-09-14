@@ -1,5 +1,6 @@
 package cascading.mongodb;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 
@@ -20,5 +21,25 @@ public class DefaultMongoQueryDocument implements MongoQueryDocument
 
     public void skip(int skip) {
         this.skipValue = skip;
+    }
+
+    public int count(DBCollection collection) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void executeOn(DBCollection collection) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public int position() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public BasicDBObject next() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public boolean hasNext() {
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
     }
 }

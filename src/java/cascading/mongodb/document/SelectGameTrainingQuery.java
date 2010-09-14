@@ -35,7 +35,7 @@ public class SelectGameTrainingQuery implements MongoQueryDocument
         return cursor;
     }
 
-    public long count(DBCollection collection) {
+    public int count(DBCollection collection) {
         return collection.find(SelectGameTrainingQuery.base).count();
     }
 
@@ -46,5 +46,13 @@ public class SelectGameTrainingQuery implements MongoQueryDocument
     public BasicDBObject next()
     {
         return (BasicDBObject) cursor.next();
+    }
+
+    public int position() {
+        return cursor.itcount();
+    }
+
+    public boolean hasNext() {
+        return cursor.hasNext();
     }
 }

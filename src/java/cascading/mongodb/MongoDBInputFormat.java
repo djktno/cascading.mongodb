@@ -18,19 +18,24 @@ import java.io.IOException;
  * Date: Jul 28, 2010
  * Time: 9:52:27 PM
  */
-public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> implements InputFormat<K, V>, JobConfigurable {
+public class MongoDBInputFormat<K extends MongoQueryDocument, V extends MongoDocument> implements InputFormat<K, V>, JobConfigurable {
 
     static final Logger log = Logger.getLogger(MongoDBInputFormat.class.getName());
     private int maxConcurrentReads = 0;
     private int limit = 2000;
+    private K queryDocument;
+    private Class<V> subjectDocumentClass;
+
+    public MongoDBInputFormat()
+    {
+        this.queryDocument = (K) new DefaultMongoQueryDocument();
+    }
 
     public InputSplit[] getSplits(JobConf jobConf, int chunks) throws IOException {
 
         chunks = maxConcurrentReads == 0 ? chunks : maxConcurrentReads;
 
         MongoDBConfiguration dbConf = new MongoDBConfiguration(jobConf);
-        int port = dbConf.getPort();
-        String host = dbConf.getHost();
         String database = dbConf.getDatabase();
         String collection = dbConf.getCollection();
 
@@ -39,7 +44,7 @@ public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> i
 
         DBCollection dbCollection = db.getCollection(collection);
 
-        int count = (int) new SelectGameTrainingQuery().count(dbCollection);
+        int count = queryDocument.count(dbCollection);
 
         if (limit != -1) {
             count = Math.min(limit, count);
@@ -66,24 +71,28 @@ public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> i
 
     public RecordReader getRecordReader(InputSplit inputSplit, JobConf jobConf, Reporter reporter) throws IOException {
 
-        //Class inputClass = jobConf.getInputClass();
 
-        return new MongoDBRecordReader((Class<K>) GameDocument.class, jobConf);
+        return new MongoDBRecordReader(queryDocument, jobConf);
 
     }
+
+    public void setQueryDocument(K queryDocument)
+    {
+        this.queryDocument = queryDocument;
+    }
+
 
     public void configure(JobConf jobConf) {
-        log.info("Configuring the reader for MongoDB.");
+        
     }
 
-    protected class MongoDBRecordReader implements RecordReader<LongWritable, K> {
+    protected class MongoDBRecordReader implements RecordReader<LongWritable, V> {
         private long pos = 0;
-        private Class<K> inputClass;
         private JobConf job;
-        private DBCursor cursor;
+//        private DBCursor cursor;
+        private MongoQueryDocument query;
 
-        protected MongoDBRecordReader(Class<K> inputClass, JobConf job) throws IOException {
-            this.inputClass = inputClass;
+        protected MongoDBRecordReader(MongoQueryDocument queryDocument, JobConf job) throws IOException {
             this.job = job;
 
             MongoDBConfiguration dbConf = new MongoDBConfiguration(job);
@@ -95,15 +104,11 @@ public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> i
             Mongo m = MongoWrapper.instance();
             DB db = m.getDB(database);
 
-            DBCollection dbcollection = db.getCollection(collection);
+            DBCollection dbCollection = db.getCollection(collection);
 
+            queryDocument.executeOn(dbCollection);
 
-            //log.info("Query to " + collection + " using " + dbObject);
-
-            cursor = new SelectGameTrainingQuery().find(dbcollection);
-
-            log.info(cursor.explain());
-
+            this.query = queryDocument;
         }
 
         private BasicDBObject getQueryDocument() {
@@ -115,14 +120,14 @@ public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> i
         }
 
 
-        public boolean next(LongWritable key, K value) throws IOException {
+        public boolean next(LongWritable key, V value) throws IOException {
 
-            if (!cursor.hasNext()) {
+            if (!query.hasNext()) {
                 return false;
             }
 
             key.set(pos /*+ split.getStart()*/);
-            value.readFields((BasicDBObject) cursor.next());
+            value.readFields(query.next());
 
             pos++;
 
@@ -134,8 +139,8 @@ public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> i
             return new LongWritable();
         }
 
-        public K createValue() {
-            return ReflectionUtils.newInstance(inputClass, job);
+        public V createValue() {
+            return ReflectionUtils.newInstance(subjectDocumentClass, job);
         }
 
         public long getPos() throws IOException {
