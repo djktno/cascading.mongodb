@@ -84,7 +84,7 @@ public class DefaultMongoDocument implements MongoDocument {
             tuple.add(value);
         }
 
-        tupleEntry = new TupleEntry(fields, tuple);
+        tupleEntry = new TupleEntry(selector, tuple);
 
     }
 

@@ -4,11 +4,14 @@ import cascading.mongodb.document.DefaultMongoDocument;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoException;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: djktno
@@ -71,6 +74,41 @@ public class GameDocument extends DefaultMongoDocument
             document.put(selector.get(j).toString(), tuple.getString(j));
         }
 
+
+    }
+
+    public void readFields(BasicDBObject document) throws MongoException {
+
+        Set<String> keySet = document.keySet();
+        if (document.keySet().isEmpty())
+            return;
+
+        
+        //only interested in a (-n embedded) list called games (which has title and article wrapped in it.
+        Fields fields = new Fields("title", "article");
+        Tuple tuple = new Tuple();
+
+        BasicDBList d = (BasicDBList) document.get("games");
+        BasicDBObject o = (BasicDBObject) d.get("0");
+
+        String articles = o.getString("articles");
+        String name = o.getString("name");
+
+        //To' up...from the flo' up.
+
+//        fields.append(new Fields("title", "article"));
+        tuple.add(name);
+        tuple.add(articles);
+
+//        for (int i = 0; i < d.size(); i++) {
+//
+//            Object value = d.get(i);
+//
+//            //fields.append(new Fields(key));
+//            tuple.add(value);
+//        }
+
+        tupleEntry = new TupleEntry(fields, tuple);
 
     }
 
