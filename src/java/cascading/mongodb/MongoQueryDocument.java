@@ -1,5 +1,6 @@
 package cascading.mongodb;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 
@@ -13,4 +14,9 @@ public interface MongoQueryDocument
 {
     DBCursor find(DBCollection collection);
     void skip(int skip);
+    int count(DBCollection collection);
+    void executeOn(DBCollection collection);
+    int position();
+    BasicDBObject next();
+    boolean hasNext();
 }
