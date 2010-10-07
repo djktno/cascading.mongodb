@@ -16,7 +16,7 @@ import java.awt.*;
 public class SelectGameTrainingQuery implements MongoQueryDocument
 {
     private int skipValue = 0;
-    private static BasicDBObject projection = new BasicDBObject().append("games.name", 1).append("games.articles", 1);
+    private static BasicDBObject projection = new BasicDBObject().append("games.name", 1).append("games.articles", 1).append("games.name_aliases", 1);
     private static BasicDBObject base = new BasicDBObject().append("games.release_date", new BasicDBObject("$gte", "2004"));
     private static BasicDBObject sort = new BasicDBObject().append("games.name", -1);
 
