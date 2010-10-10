@@ -9,3 +9,5 @@ out
 dist
 jvm*.properties
 testlib
+src/test/cascading/mongodb/MongoDBTest.java
+src/test/cascading/mongodb/document/*.java
