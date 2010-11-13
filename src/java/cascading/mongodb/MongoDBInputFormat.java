@@ -1,8 +1,6 @@
 package cascading.mongodb;
 
-import cascading.mongodb.document.DefaultMongoDocument;
-import cascading.mongodb.document.GameDocument;
-import cascading.mongodb.document.SelectGameTrainingQuery;
+import cascading.mongodb.document.spec.IndexDocument;
 import cascading.tuple.TupleEntry;
 import com.mongodb.*;
 import org.apache.hadoop.io.LongWritable;
@@ -18,24 +16,19 @@ import java.io.IOException;
  * Date: Jul 28, 2010
  * Time: 9:52:27 PM
  */
-public class MongoDBInputFormat<K extends MongoQueryDocument, V extends MongoDocument> implements InputFormat<K, V>, JobConfigurable {
+public class MongoDBInputFormat<K extends MongoDocument, V extends TupleEntry> implements InputFormat<K, V>, JobConfigurable {
 
     static final Logger log = Logger.getLogger(MongoDBInputFormat.class.getName());
     private int maxConcurrentReads = 0;
     private int limit = 2000;
-    private K queryDocument;
-    private Class<V> subjectDocumentClass;
-
-    public MongoDBInputFormat()
-    {
-        this.queryDocument = (K) new DefaultMongoQueryDocument();
-    }
 
     public InputSplit[] getSplits(JobConf jobConf, int chunks) throws IOException {
 
         chunks = maxConcurrentReads == 0 ? chunks : maxConcurrentReads;
 
         MongoDBConfiguration dbConf = new MongoDBConfiguration(jobConf);
+        int port = dbConf.getPort();
+        String host = dbConf.getHost();
         String database = dbConf.getDatabase();
         String collection = dbConf.getCollection();
 
@@ -44,7 +37,7 @@ public class MongoDBInputFormat<K extends MongoQueryDocument, V extends MongoDoc
 
         DBCollection dbCollection = db.getCollection(collection);
 
-        int count = queryDocument.count(dbCollection);
+        int count = (int) IndexDocument.getQueryDocument().count(dbCollection);
 
         if (limit != -1) {
             count = Math.min(limit, count);
@@ -71,28 +64,24 @@ public class MongoDBInputFormat<K extends MongoQueryDocument, V extends MongoDoc
 
     public RecordReader getRecordReader(InputSplit inputSplit, JobConf jobConf, Reporter reporter) throws IOException {
 
+        //Class inputClass = jobConf.getInputClass();
 
-        return new MongoDBRecordReader(queryDocument, jobConf);
+        return new MongoDBRecordReader((Class<K>) IndexDocument.class, jobConf);
 
     }
-
-    public void setQueryDocument(K queryDocument)
-    {
-        this.queryDocument = queryDocument;
-    }
-
 
     public void configure(JobConf jobConf) {
-        
+        log.info("Configuring the reader for MongoDB.");
     }
 
-    protected class MongoDBRecordReader implements RecordReader<LongWritable, V> {
+    protected class MongoDBRecordReader implements RecordReader<LongWritable, K> {
         private long pos = 0;
+        private Class<K> inputClass;
         private JobConf job;
-//        private DBCursor cursor;
-        private MongoQueryDocument query;
+        private DBCursor cursor;
 
-        protected MongoDBRecordReader(MongoQueryDocument queryDocument, JobConf job) throws IOException {
+        protected MongoDBRecordReader(Class<K> inputClass, JobConf job) throws IOException {
+            this.inputClass = inputClass;
             this.job = job;
 
             MongoDBConfiguration dbConf = new MongoDBConfiguration(job);
@@ -104,11 +93,15 @@ public class MongoDBInputFormat<K extends MongoQueryDocument, V extends MongoDoc
             Mongo m = MongoWrapper.instance();
             DB db = m.getDB(database);
 
-            DBCollection dbCollection = db.getCollection(collection);
+            DBCollection dbcollection = db.getCollection(collection);
 
-            queryDocument.executeOn(dbCollection);
 
-            this.query = queryDocument;
+            //log.info("Query to " + collection + " using " + dbObject);
+
+            cursor = IndexDocument.getQueryDocument().find(dbcollection);
+
+            log.info(cursor.explain());
+
         }
 
         private BasicDBObject getQueryDocument() {
@@ -120,14 +113,14 @@ public class MongoDBInputFormat<K extends MongoQueryDocument, V extends MongoDoc
         }
 
 
-        public boolean next(LongWritable key, V value) throws IOException {
+        public boolean next(LongWritable key, K value) throws IOException {
 
-            if (!query.hasNext()) {
+            if (!cursor.hasNext()) {
                 return false;
             }
 
             key.set(pos /*+ split.getStart()*/);
-            value.readFields(query.next());
+            value.readFields((BasicDBObject) cursor.next());
 
             pos++;
 
@@ -139,8 +132,8 @@ public class MongoDBInputFormat<K extends MongoQueryDocument, V extends MongoDoc
             return new LongWritable();
         }
 
-        public V createValue() {
-            return ReflectionUtils.newInstance(subjectDocumentClass, job);
+        public K createValue() {
+            return ReflectionUtils.newInstance(inputClass, job);
         }
 
         public long getPos() throws IOException {

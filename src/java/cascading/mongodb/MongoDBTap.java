@@ -1,6 +1,7 @@
 package cascading.mongodb;
 
 import cascading.flow.Flow;
+import cascading.tap.SinkMode;
 import cascading.tap.Tap;
 import cascading.tap.TapException;
 import cascading.tap.hadoop.TapCollector;
@@ -43,6 +44,8 @@ public class MongoDBTap extends Tap {
     private boolean isAuthenticated = false;
     private boolean isMongoInitialized = false;
 
+    private boolean replace;
+
     private MongoDocument documentFormat;
 
     /**
@@ -69,8 +72,9 @@ public class MongoDBTap extends Tap {
         initMongo();
     }
 
+
     /**
-     * Constructor for using the tap as a sink (includes sink model object)
+     * Constructor for configuring the tap as a sink.
      *
      * @param hostname
      * @param port
@@ -81,10 +85,21 @@ public class MongoDBTap extends Tap {
      * @param scheme
      * @param documentDescriptor
      */
-    public MongoDBTap(String hostname, int port, String database, String collection, String username, char[] password, MongoDBScheme scheme, MongoDocument documentDescriptor) {
-        this(hostname, port, database, collection, username, password, scheme);
+    public MongoDBTap(String hostname, int port, String database, String collection, String username, char[] password, MongoDBScheme scheme, MongoDocument documentDescriptor, SinkMode mode) {
+        super(scheme, mode);
+        this.connectionUrl = hostname + "/" + database + "/" + collection;
+        this.collection = collection;
+        this.hostname = hostname;
+        this.port = port;
+        this.database = database;
+        this.username = username;
+        this.password = password;
+
         this.documentFormat = documentDescriptor;
+
+        initMongo();
     }
+
 
     /**
      * Constructor used for host with database on standard mongodb port.
@@ -109,7 +124,7 @@ public class MongoDBTap extends Tap {
      * @param collection
      * @param scheme
      */
-    public MongoDBTap(String hostname, int port, String database, String collection, MongoDBScheme scheme) {
+    public MongoDBTap(String hostname, int port, String database, String collection, MongoDBScheme scheme, SinkMode mode) {
         this(hostname, port, database, collection, null, null, scheme);
     }
 
@@ -123,8 +138,8 @@ public class MongoDBTap extends Tap {
      * @param scheme
      * @param descriptor
      */
-    public MongoDBTap(String hostname, int port, String database, String collection, MongoDBScheme scheme, MongoDocument descriptor) {
-        this(hostname, port, database, collection, null, null, scheme, descriptor);
+    public MongoDBTap(String hostname, int port, String database, String collection, MongoDBScheme scheme, MongoDocument descriptor, SinkMode mode) {
+        this(hostname, port, database, collection, null, null, scheme, descriptor, mode);
     }
 
     private void initMongo() {
@@ -145,12 +160,10 @@ public class MongoDBTap extends Tap {
             MongoWrapper.setInstance(m);
             if (null == username) ;
             else {
-                try
-                {
+                try {
                     isAuthenticated = m.getDB(database).authenticate(username, password);
                 }
-                catch(IllegalStateException e)
-                {
+                catch (IllegalStateException e) {
                     //we may have called authenticate twice - eat this.
                     //log.warn("May have reauthenticated: " + e.getMessage());
                 }
@@ -158,8 +171,7 @@ public class MongoDBTap extends Tap {
 
             }
 
-            if (MongoWrapper.instance() != null)
-            {
+            if (MongoWrapper.instance() != null) {
                 log.info("MongoWrapper {" + MongoWrapper.class.toString() + "} is not null, and neither is the Mongo instance {" + MongoWrapper.instance() + "} while initializing.");
                 isMongoInitialized = true;
             }
@@ -176,7 +188,7 @@ public class MongoDBTap extends Tap {
         try {
 
             Mongo m = MongoWrapper.instance();
-            log.info("MongoWrapper {" + MongoWrapper.class.toString() + "}.  Mongo {" + m + "} " + ((m == null) ? " is " : " is not ") + " null." );
+            log.info("MongoWrapper {" + MongoWrapper.class.toString() + "}.  Mongo {" + m + "} " + ((m == null) ? " is " : " is not ") + " null.");
             db = MongoWrapper.instance().getDB(database);
             log.info("Got database reference: " + db.getName());
 
@@ -272,7 +284,6 @@ public class MongoDBTap extends Tap {
         initMongo();
 
 
-
         log.info("Sinking to collection: {name=" + collection + "};");
 
         if (isReplace() && jobConf.get("mapred.task.partition") == null) {
@@ -285,10 +296,9 @@ public class MongoDBTap extends Tap {
     }
 
     @Override
-    public void sourceInit(JobConf jobConf) throws IOException
-    {
+    public void sourceInit(JobConf jobConf) throws IOException {
         // a hack for MultiInputFormat to see that there is a child format
-        FileInputFormat.setInputPaths( jobConf, getPath() );
+        FileInputFormat.setInputPaths(jobConf, getPath());
 
         log.debug("Sourcing from collection: {name= " + collection + "};");
 
